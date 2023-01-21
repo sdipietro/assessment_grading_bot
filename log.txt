@@ -1,0 +1,95 @@
+
+#string_map!
+  should accept a string and a block as args
+  should mutate the input string by replacing each character with its result when passed into the block (FAILED - 1)
+
+#three?
+  should accept an array and a block as args
+  should return a boolean indicating if there are exactly three elements of the array that return true when passed into the block
+
+#nand_select
+  should accept an array and two procs as args
+  should return a new array containing elements of the original array, except those that return true when passed into both (FAILED - 2)
+
+#hash_of_array_sum
+  should accept a hash containing arrays as values
+  should return the total sum of all arrays in the hash (FAILED - 3)
+
+#abbreviate
+  should accept a sentence string as an arg
+  should return a new sentence where words longer than 4 characters have their vowels (a, e, i, o, u) removed (FAILED - 4)
+
+hash_selector
+  should accept a hash and any number of additional arguments
+  should return a new hash containing keys of the original hash that were passed in as additional arguments (FAILED - 5)
+  when no additional arguments are passed
+    should return the original hash (FAILED - 6)
+
+Failures:
+
+  1) #string_map! should mutate the input string by replacing each character with its result when passed into the block
+     Failure/Error: expect(str_1).to eq("APPLE CIDER")
+       
+       expected: "APPLE CIDER"
+            got: "Apple Cider"
+       
+       (compared using ==)
+     # ./spec/assessment_1_spec.rb:11:in `block (2 levels) in <top (required)>'
+
+  2) #nand_select should return a new array containing elements of the original array, except those that return true when passed into both
+     Failure/Error: expect(nand_select([-2, -4, 7, 6, 8], even, positive)).to eq([-2, -4, 7])
+       
+       expected: [-2, -4, 7]
+            got: nil
+       
+       (compared using ==)
+     # ./spec/assessment_1_spec.rb:51:in `block (2 levels) in <top (required)>'
+
+  3) #hash_of_array_sum should return the total sum of all arrays in the hash
+     Failure/Error: expect(hash_of_array_sum(hash_1)).to eq(25)
+       
+       expected: 25
+            got: nil
+       
+       (compared using ==)
+     # ./spec/assessment_1_spec.rb:79:in `block (2 levels) in <top (required)>'
+
+  4) #abbreviate should return a new sentence where words longer than 4 characters have their vowels (a, e, i, o, u) removed
+     Failure/Error: expect(abbreviate("follow the yellow brick road")).to eq("fllw the yllw brck road")
+       
+       expected: "fllw the yllw brck road"
+            got: "fllwyllwbrck"
+       
+       (compared using ==)
+     # ./spec/assessment_1_spec.rb:90:in `block (2 levels) in <top (required)>'
+
+  5) hash_selector should return a new hash containing keys of the original hash that were passed in as additional arguments
+     Failure/Error: expect(hash_selector({"z"=> true, "f"=>-1, "c"=>32}, "z", "c")).to eq({"z"=>true, "c"=>32})
+       
+       expected: {"z"=>true, "c"=>32}
+            got: nil
+       
+       (compared using ==)
+     # ./spec/assessment_1_spec.rb:104:in `block (2 levels) in <top (required)>'
+
+  6) hash_selector when no additional arguments are passed should return the original hash
+     Failure/Error: expect(hash_selector({0=>"null", 1=>"ein", 2=>"zwei", 3=>"drei" })).to eq({0=>"null", 1=>"ein", 2=>"zwei", 3=>"drei"})
+       
+       expected: {0=>"null", 1=>"ein", 2=>"zwei", 3=>"drei"}
+            got: nil
+       
+       (compared using ==)
+     # ./spec/assessment_1_spec.rb:112:in `block (3 levels) in <top (required)>'
+
+Finished in 0.00494 seconds (files took 0.12437 seconds to load)
+13 examples, 6 failures
+
+Failed examples:
+
+rspec ./spec/assessment_1_spec.rb:8 # #string_map! should mutate the input string by replacing each character with its result when passed into the block
+rspec ./spec/assessment_1_spec.rb:50 # #nand_select should return a new array containing elements of the original array, except those that return true when passed into both
+rspec ./spec/assessment_1_spec.rb:78 # #hash_of_array_sum should return the total sum of all arrays in the hash
+rspec ./spec/assessment_1_spec.rb:89 # #abbreviate should return a new sentence where words longer than 4 characters have their vowels (a, e, i, o, u) removed
+rspec ./spec/assessment_1_spec.rb:103 # hash_selector should return a new hash containing keys of the original hash that were passed in as additional arguments
+rspec ./spec/assessment_1_spec.rb:111 # hash_selector when no additional arguments are passed should return the original hash
+
