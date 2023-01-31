@@ -5,12 +5,12 @@ mkdir ~/Downloads/Assessments
 
 open ~/Downloads/Assessments
 
-echo '' > ~/Desktop/hw_tracking_bot/scores_data.txt
-echo '' > ~/Desktop/hw_tracking_bot/log.txt
+echo '' > ~/Desktop/assessment_grading_bot/scores_data.txt
+echo '' > ~/Desktop/assessment_grading_bot/log.txt
 
 now=$(date)
-echo "$now" >> ~/Desktop/hw_tracking_bot/scores_data.txt
+echo "$now" >> ~/Desktop/assessment_grading_bot/scores_data.txt
 
-~/.nvm/versions/node/v16.19.0/bin/node ~/Desktop/hw_tracking_bot/assessment_bot.js
+node ~/Desktop/assessment_grading_bot/assessment_bot.js
 
 echo 'End'

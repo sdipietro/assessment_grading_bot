@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo '' > ~/Desktop/assessment_grading_bot/log.txt
+
 cd ~/Downloads
 
 cd Assessments
@@ -12,7 +14,7 @@ rm $2.zip
 
 cd $2
 
-# wget https://s3-us-west-2.amazonaws.com/aa-progress-tracker/score_files/zips/000/060/071/original/TimothyDong-8472_3161.zip -O ~/Downloads/Assessments/n.zip
+# wget https://s3-us-west-2.amazonaws.com/aa-progress-tracker/score_files/zips/000/060/071/original/ -O ~/Downloads/Assessments/n.zip
 
 # unzip -d ~/Downloads/Assessments/n n.zip
 
@@ -29,12 +31,19 @@ fi
 
 if [ -f ./Gemfile ]
 then
-    bundle install > ~/Desktop/hw_tracking_bot/log.txt
-    bundle exec rspec > ~/Desktop/hw_tracking_bot/log.txt
-    SCORE=$(grep '^[0-9][0-9]* examples, [0-9][0-9]* failures' ~/Desktop/hw_tracking_bot/log.txt)
+    bundle install > ~/Desktop/assessment_grading_bot/log.txt
+    bundle exec rspec > ~/Desktop/assessment_grading_bot/log.txt
+    # RET=${PIPESTATUS[0]}
+    # if [[$RET -eq 124]]
+    # then
+    #     SCORE=$(grep '^[0-9][0-9]* examples, [0-9][0-9]* failures' ~/Desktop/assessment_grading_bot/log.txt)
+    # else
+    #     SCORE='Unable To Run Specs'
+    # fi
+    SCORE=$(grep '^[0-9][0-9]* examples, [0-9][0-9]* failures' ~/Desktop/assessment_grading_bot/log.txt)
 else
     SCORE='Unable To Run Specs'
 fi
 
-# echo "$2 : $SCORE" >> ~/Desktop/hw_tracking_bot/scores_data.txt
+# echo "$2 : $SCORE" >> ~/Desktop/assessment_grading_bot/scores_data.txt
 echo "$2 : $SCORE"
