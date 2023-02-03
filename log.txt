@@ -45,6 +45,6 @@ Array#my_select
   yields each element to the block
   returns an array of filtered down items
 
-Finished in 0.01257 seconds (files took 0.06465 seconds to load)
+Finished in 0.00767 seconds (files took 0.04422 seconds to load)
 29 examples, 0 failures
 
