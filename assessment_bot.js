@@ -4,14 +4,16 @@ const { exec } = require("child_process");
 const { google } = require("googleapis");
 const path = require('path');
 
-const progressTrackerScoresUrl = credentials.scoresUrl;
+const progressTrackerScoresUrl = 'https://progress.appacademy.io/scores';
+const progressTrackerEmail = credentials.aAemail;
+const progressTrackerPassword = credentials.aApassword;
 
 async function loginPT(page) {
     console.log('Visiting Progress Tracker...');
     await page.goto(progressTrackerScoresUrl);
     console.log('Logging into Progress Tracker...');
-    await page.type('[id=instructor_email]', credentials.aAemail);
-    await page.type('[id=instructor_password]', credentials.aApassword);
+    await page.type('[id=instructor_email]', progressTrackerEmail);
+    await page.type('[id=instructor_password]', progressTrackerPassword);
     await page.keyboard.press('Enter',{delay:10000});
     return page;
 }
@@ -76,7 +78,7 @@ async function gradeAssessments(assessmentLinksObj) {
         let examples;
         let failures;
         let grade;
-        if (result.includes(' : ') && result.includes('failures')) {
+        if (result.includes(' : ') && result.includes('failure')) {
             specs = result.split(' : ')[1];
             examples = parseInt(specs.split(' examples,')[0]);
             failures = parseInt(specs.split(', ')[1].split(' ')[0]);
@@ -117,33 +119,39 @@ async function inputScoresGoogle(scoresData) {
             startingCol = 'H';
             break;
         case assessName == 'Ruby 1':
-            startingCol = 'N';
-            break;
-        case assessName == 'Ruby 2R':
-            startingCol = 'O';
+            startingCol = 'I';
             break;
         case assessName == 'Ruby 2':
-            startingCol = 'J';
+            startingCol = 'M';
+            break;
+        case assessName == 'Ruby 2R':
+            startingCol = 'Q';
             break;
         case assessName == 'Rails 1':
-            startingCol = 'S';
+            startingCol = 'R';
             break;
         case assessName == 'Rails 1R':
-            startingCol = 'X';
+            startingCol = 'W';
             break;
         case assessName == 'Rails Olympics':
-            startingCol = 'Y';
+            startingCol = 'X';
             break;
         case assessName == 'Rails 2':
-            startingCol = 'AB';
+            startingCol = 'AA';
             break;
         case assessName == 'Rails 2R':
-            startingCol = 'AC';
+            startingCol = 'AB';
             break;
         case assessName == 'Javascript 1':
+            startingCol = 'AC';
+            break;
+        case assessName == 'Javascript 1R':
             startingCol = 'AD';
             break;
         case assessName == 'React 1':
+            startingCol = 'AE';
+            break;
+        case assessName == 'React 1R':
             startingCol = 'AF';
             break;
         default:
