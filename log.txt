@@ -1,204 +1,61 @@
 
-CleverQueue
-  should inherit from SimpleQueue
-  should not expose a writer for @capacity
-  should not expose a reader or writer for @hidden_array
-  #initialize
-    should accept two numbers as arguments
-    should set @capacity to the first arg
-    should set @soft_limit to the second arg
-    should raise the error 'invalid args' if the soft limit is larger than the capacity
-    should set @hidden_array to an empty array
-  #capacity
-    should return the capacity of the queue
-  #soft_limit
-    should return the soft_limit of the queue
-  #soft_limit=
-    should set @soft_limit to a given argument
-  #enqueue
-    should accept any number of arguments (FAILED - 1)
-    when the number of arguments would cause the queue to exceed capacity
-      should not add anything to the queue
-      should raise the error 'queue is full'
-    when the number of arguments would not cause the queue to exceed capacity
-      should add the given arguments to the queue (last argument at the back) (FAILED - 2)
-      should return the new total number of items on the queue (FAILED - 3)
-  #dequeue
-    when no argument is passed in
-      should remove the front item in the queue (FAILED - 4)
-      should return an array containing the removed item (FAILED - 5)
-    when a number argument, n, is passed in
-      should remove the first n items in the queue (FAILED - 6)
-      should return an array containing the removed items (FAILED - 7)
-      should return the array of removed items sorted by the ordered that they were removed (FAILED - 8)
-      and there are not enough items on the queue to remove
-        should remove as many items as possible from the queue (FAILED - 9)
-        should return an array containing the items that were removed and nil values for the number of items that were unable to be dequeued (FAILED - 10)
-  #trim
-    when the queue is not over the soft limit
-      should not modify the queue
-      should return false
-    when the queue is over the soft limit
-      should remove enough items from the back of the queue until the queue's size is at the soft limit (FAILED - 11)
-      should return true
+Blog
+  is expected to validate that :title cannot be empty/falsy
+  is expected to validate that :body cannot be empty/falsy
+  is expected to validate that :title is case-sensitively unique within the scope of :author_id
+  is expected to belong to author class_name => User required: true
+  is expected to have many comments class_name => Comment
+  has a foreign key constraint and (exactly one) index for `author_id`
+  can be successfully destroyed
 
-SimpleQueue
-  should not expose a reader or writer for @hidden_array
-  #initialize
-    should set @hidden_array to an empty array
-  #size
-    should return the total number of items currently on the queue
-  #vacant?
-    when the queue contains no items
-      should return true
-    when the queue contains some items
-      should return false
-  #front
-    should return the item at the front of the queue
-    should not modify the queue
-  #back
-    should return the item at the back of the queue
-    should not modify the queue
-  #first
-    should accept a number, n, as an arg
-    should return an array containing the first n items in the queue, in the same order that they appear in the queue
-    should not modify the queue
-  #last
-    should accept a number, n, as an arg
-    should return an array containing the last n items in the queue, in the same order that they appear in the queue (FAILED - 12)
-    should not modify the queue
-  #enqueue
-    should accept an item as an argument
-    should add the given item to the back of the queue
-    should return the new size of the queue
-  #dequeue
-    when there are no items in the queue
-      should return nil
-    when there is at least one item in the queue
-      should remove the item at the front of the queue
-      should return the removed item
+Comment
+  is expected to validate that :body cannot be empty/falsy
+  is expected to belong to author class_name => User required: true
+  is expected to belong to blog class_name => Blog required: true
+  Foreign key constraints and indexes
+    has a foreign key constraint and index on `author_id`
+    has a foreign key constraint and index on `blog_id`
 
-Failures:
+User
+  is expected to validate that :email cannot be empty/falsy
+  is expected to validate that :email is case-sensitively unique
+  is expected to have many blogs class_name => Blog
+  is expected to have many comments class_name => Comment
+  is expected to have many comments_on_blogs through blogs source => comments
+  is expected to have many blogs_commented_on through comments source => blog
+  has an index on `email`
+  makes sure associations are bi-directional
+  can be successfully destroyed
 
-  1) CleverQueue #enqueue should accept any number of arguments
-     Failure/Error: expect { small_queue.enqueue(5, 2, 3) }.to_not raise_error
-       expected no Exception, got #<RuntimeError: queue is full> with backtrace:
-         # ./lib/clever_queue.rb:18:in `enqueue'
-         # ./spec/clever_queue_spec.rb:72:in `block (4 levels) in <top (required)>'
-         # ./spec/clever_queue_spec.rb:72:in `block (3 levels) in <top (required)>'
-     # ./spec/clever_queue_spec.rb:72:in `block (3 levels) in <top (required)>'
+Blogs
+  GET /blogs (#index)
+    renders the index template and sets an @blogs variable for all Blogs in the database
+  GET /blogs/:id (#show)
+    renders the show template and sets an @blog variable for the Blog matching the params id
+  POST /blogs (#create)
+    with valid params
+      redirects to the blog's index page after a blog is created
+    with invalid params
+      renders the new template if a blog does not NOT save to the database
 
-  2) CleverQueue #enqueue when the number of arguments would not cause the queue to exceed capacity should add the given arguments to the queue (last argument at the back)
-     Failure/Error: small_queue.enqueue('a')
-     RuntimeError:
-       queue is full
-     # ./lib/clever_queue.rb:18:in `enqueue'
-     # ./spec/clever_queue_spec.rb:100:in `block (4 levels) in <top (required)>'
+Comments
+  POST /comments (#create)
+    with valid params
+      redirects to the blog's show page after a comment is created
+    with invalid params
+      redirects to the blog's show page if comment is NOT created
+  DELETE /comments/:id (#destroy)
+    removes the comment from the database and redirects to the blog's show page
 
-  3) CleverQueue #enqueue when the number of arguments would not cause the queue to exceed capacity should return the new total number of items on the queue
-     Failure/Error: expect(small_queue.enqueue('a')).to eq(1)
-     RuntimeError:
-       queue is full
-     # ./lib/clever_queue.rb:18:in `enqueue'
-     # ./spec/clever_queue_spec.rb:108:in `block (4 levels) in <top (required)>'
+Users
+  GET /users/:id (#show)
+    renders the show template and sets an @user variable for the Blog matching the params id
+  POST /users (#create)
+    with valid params
+      redirects to the blog index page after a user is created
+    with invalid params
+      renders the new template if a user cannot be created
 
-  4) CleverQueue #dequeue when no argument is passed in should remove the front item in the queue
-     Failure/Error: expect(small_queue.instance_variable_get(:@hidden_array)).to eq(['b', 'c'])
-       
-       expected: ["b", "c"]
-            got: ["a", "b", "c"]
-       
-       (compared using ==)
-     # ./spec/clever_queue_spec.rb:119:in `block (4 levels) in <top (required)>'
-
-  5) CleverQueue #dequeue when no argument is passed in should return an array containing the removed item
-     Failure/Error: expect(small_queue.dequeue).to match_array(['a'])
-       expected collection contained:  ["a"]
-       actual collection contained:    ["a", "b", "c", "e"]
-       the extra elements were:        ["b", "c", "e"]
-     # ./spec/clever_queue_spec.rb:124:in `block (4 levels) in <top (required)>'
-
-  6) CleverQueue #dequeue when a number argument, n, is passed in should remove the first n items in the queue 
-     Failure/Error: expect(small_queue.instance_variable_get(:@hidden_array)).to eq([])
-       
-       expected: []
-            got: ["a", "b", "c"]
-       
-       (compared using ==)
-     # ./spec/clever_queue_spec.rb:132:in `block (4 levels) in <top (required)>'
-
-  7) CleverQueue #dequeue when a number argument, n, is passed in should return an array containing the removed items
-     Failure/Error: expect(small_queue.dequeue(3)).to match_array(['a', 'b', 'c'])
-       expected collection contained:  ["a", "b", "c"]
-       actual collection contained:    ["a", "b", "c", "e"]
-       the extra elements were:        ["e"]
-     # ./spec/clever_queue_spec.rb:137:in `block (4 levels) in <top (required)>'
-
-  8) CleverQueue #dequeue when a number argument, n, is passed in should return the array of removed items sorted by the ordered that they were removed
-     Failure/Error: expect(small_queue.dequeue(3)).to eq(['a', 'b', 'c'])
-       
-       expected: ["a", "b", "c"]
-            got: ["a", "b", "c", "e"]
-       
-       (compared using ==)
-     # ./spec/clever_queue_spec.rb:142:in `block (4 levels) in <top (required)>'
-
-  9) CleverQueue #dequeue when a number argument, n, is passed in and there are not enough items on the queue to remove should remove as many items as possible from the queue
-     Failure/Error: expect(small_queue.instance_variable_get(:@hidden_array)).to eq([])
-       
-       expected: []
-            got: ["a", "b", "c", "e"]
-       
-       (compared using ==)
-     # ./spec/clever_queue_spec.rb:149:in `block (5 levels) in <top (required)>'
-
-  10) CleverQueue #dequeue when a number argument, n, is passed in and there are not enough items on the queue to remove should return an array containing the items that were removed and nil values for the number of items that were unable to be dequeued
-     Failure/Error: expect(small_queue.dequeue(6)).to eq(['a', 'b', 'c', 'e', nil, nil])
-       
-       expected: ["a", "b", "c", "e", nil, nil]
-            got: ["a", "b", "c", "e"]
-       
-       (compared using ==)
-       
-       Diff:
-       @@ -1 +1 @@
-       -["a", "b", "c", "e", nil, nil]
-       +["a", "b", "c", "e"]
-     # ./spec/clever_queue_spec.rb:154:in `block (5 levels) in <top (required)>'
-
-  11) CleverQueue #trim when the queue is over the soft limit should remove enough items from the back of the queue until the queue's size is at the soft limit
-     Failure/Error: expect(small_queue.instance_variable_get(:@hidden_array)).to eq(['a', 'b'])
-       
-       expected: ["a", "b"]
-            got: ["a", "b", "c", "d"]
-       
-       (compared using ==)
-     # ./spec/clever_queue_spec.rb:180:in `block (4 levels) in <top (required)>'
-
-  12) SimpleQueue #last should return an array containing the last n items in the queue, in the same order that they appear in the queue
-     Failure/Error: expect(queue_1.last(2)).to eq(['c', 'd'])
-       
-       expected: ["c", "d"]
-            got: []
-       
-       (compared using ==)
-     # ./spec/simple_queue_spec.rb:103:in `block (3 levels) in <top (required)>'
-
-Finished in 0.00627 seconds (files took 0.0464 seconds to load)
-48 examples, 12 failures
-
-Failed examples:
-
-rspec ./spec/clever_queue_spec.rb:71 # CleverQueue #enqueue should accept any number of arguments
-rspec ./spec/clever_queue_spec.rb:97 # CleverQueue #enqueue when the number of arguments would not cause the queue to exceed capacity should add the given arguments to the queue (last argument at the back)
-rspec ./spec/clever_queue_spec.rb:107 # CleverQueue #enqueue when the number of arguments would not cause the queue to exceed capacity should return the new total number of items on the queue
-rspec ./spec/clever_queue_spec.rb:116 # CleverQueue #dequeue when no argument is passed in should remove the front item in the queue
-rspec ./spec/clever_queue_spec.rb:122 # CleverQueue #dequeue when no argument is passed in should return an array containing the removed item
-rspec ./spec/clever_queue_spec.rb:129 # CleverQueue #dequeue when a number argument, n, is passed in should remove the first n items in the queue 
-rspec ./spec/clever_queue_spec.rb:135 # CleverQueue #dequeue when a number argument, n, is passed in should return an array containing the removed items
-rspec ./spec/clever_queue_spec.rb:140 # CleverQueue #dequeue when a number argument, n, is passed in should return the array of removed items sorted by the ordered that they were removed
-rspec ./spec/clever_queue_spec.rb:146 # CleverQueue #dequeue when a number argument, n, is passed in and there are not enough items on the queue to remove should remove as many items as possible from the queue
-rspec ./spec/clever_queue_spec.rb:152 # CleverQueue #dequeue when a number argument, n, is passed in and there are not enough items on the queue to remove should return an array containing the items that were removed and nil values for the number of items that were unable to be dequeued
-rspec ./spec/clever_queue_spec.rb:177 # CleverQueue #trim when the queue is over the soft limit should remove enough items from the back of the queue until the queue's size is at the soft limit
-rspec ./spec/simple_queue_spec.rb:101 # SimpleQueue #last should return an array containing the last n items in the queue, in the same order that they appear in the queue
+Finished in 0.36051 seconds (files took 2.23 seconds to load)
+31 examples, 0 failures
 
