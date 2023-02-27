@@ -82,9 +82,8 @@ async function monitor (page, prevSubmissions = {}) {
         console.log('Nothing to grade. Checking...');
         console.log('');
     }
-    /* add some delay */
+    
     await new Promise(_ => setTimeout(_, 10000))
-    /* call recursively */
     monitor (page, newSubmissions);
 }
 
