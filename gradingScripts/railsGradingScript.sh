@@ -44,10 +44,10 @@ fi
 if [ -f ./Gemfile ]
 then
     bundle install > ~/Desktop/assessment_grading_bot/log.txt;
-    chmod +x data/import_cat_db.sh
+    chmod +x data/import_cat_db.sh > ~/Desktop/assessment_grading_bot/log.txt;
     sh ./data/import_cat_db.sh > ~/Desktop/assessment_grading_bot/log.txt;
     bundle exec rspec > ~/Desktop/assessment_grading_bot/log.txt;
-    bundle exec rails db:drop
+    # bundle exec rails db:drop
    
     SQLSCORE=$(grep '^[0-9][0-9]* examples, [0-9][0-9]* failure' ~/Desktop/assessment_grading_bot/log.txt)
 else
@@ -76,7 +76,7 @@ fi
 if [ -f ./Gemfile ]
 then
     bundle install > ~/Desktop/assessment_grading_bot/log.txt;
-    chmod +x ./setup_db.sh
+    chmod +x ./setup_db.sh > ~/Desktop/assessment_grading_bot/log.txt;
     sh setup_db.sh > ~/Desktop/assessment_grading_bot/log.txt;
     bundle exec rspec > ~/Desktop/assessment_grading_bot/log.txt;
    
@@ -106,7 +106,7 @@ fi
 if [ -f ./Gemfile ]
 then
     bundle install > ~/Desktop/assessment_grading_bot/log.txt;
-    chmod +x ./setup_db.sh
+    chmod +x ./setup_db.sh > ~/Desktop/assessment_grading_bot/log.txt;
     sh setup_db.sh > ~/Desktop/assessment_grading_bot/log.txt;
     bundle exec rspec > ~/Desktop/assessment_grading_bot/log.txt;
    
@@ -136,7 +136,7 @@ fi
 if [ -f ./Gemfile ]
 then
     bundle install > ~/Desktop/assessment_grading_bot/log.txt;
-    chmod +x ./setup_db.sh
+    chmod +x ./setup_db.sh > ~/Desktop/assessment_grading_bot/log.txt;
     sh setup_db.sh > ~/Desktop/assessment_grading_bot/log.txt;
     bundle exec rspec > ~/Desktop/assessment_grading_bot/log.txt;
    

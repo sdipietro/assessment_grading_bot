@@ -32,14 +32,12 @@ fi
 if [ -f ./Gemfile ]
 then
     bundle install > ~/Desktop/assessment_grading_bot/log.txt;
+    rails db:drop > ~/Desktop/assessment_grading_bot/log.txt;
+    rails db:create > ~/Desktop/assessment_grading_bot/log.txt;
+    rails db:migrate db:test:load > ~/Desktop/assessment_grading_bot/log.txt;
+    rails db:schema:load > ~/Desktop/assessment_grading_bot/log.txt;
     bundle exec rspec > ~/Desktop/assessment_grading_bot/log.txt;
-    # RET=${PIPESTATUS[0]}
-    # if [[$RET -eq 124]]
-    # then
-    #     SCORE=$(grep '^[0-9][0-9]* examples, [0-9][0-9]* failure' ~/Desktop/assessment_grading_bot/log.txt)
-    # else
-    #     SCORE='Unable To Run Specs'
-    # fi
+
     SCORE=$(grep '^[0-9][0-9]* examples, [0-9][0-9]* failure' ~/Desktop/assessment_grading_bot/log.txt)
 else
     SCORE='Unable To Run Specs'

@@ -15,7 +15,10 @@ async function loginPT(page) {
     console.log('Logging into Progress Tracker...');
     await page.type('[id=instructor_email]', progressTrackerEmail);
     await page.type('[id=instructor_password]', progressTrackerPassword);
-    await page.keyboard.press('Enter',{delay:10000});
+    await page.keyboard.press('Enter');
+    await page.waitForNavigation({
+        waitUntil: 'networkidle0',
+    });
     return page;
 }
 
@@ -56,6 +59,35 @@ async function getScores(page) {
     return studentList;
 }
 
+async function monitor (page, prevSubmissions = {}) {
+    // console.log('Checking Submissions...');
+    await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
+    const newSubmissions = await getScores(page);
+    let assessName = Object.keys(newSubmissions)[0];
+    const gradeThese = {};
+    gradeThese[assessName] = {};
+
+    for (let name in newSubmissions[assessName]) {
+        if (!prevSubmissions[assessName] || !prevSubmissions[assessName][name] || (newSubmissions[assessName][name] != prevSubmissions[assessName][name])) {
+            gradeThese[assessName][name] = newSubmissions[assessName][name];
+        }
+    }
+    if (Object.values(gradeThese[assessName]) != 0) {
+        console.log('Grading Assessments...');
+        console.log('');
+        const scores = await gradeAssessments(gradeThese);
+        console.log(scores);
+        await inputScoresGoogle(scores);
+    } else {
+        console.log('Nothing to grade. Checking...');
+        console.log('');
+    }
+    /* add some delay */
+    await new Promise(_ => setTimeout(_, 10000))
+    /* call recursively */
+    monitor (page, newSubmissions);
+}
+
 async function gradeAssessments(assessmentLinksObj) {
     let assessName = Object.keys(assessmentLinksObj)[0];
     let scores = {[assessName]: {}};
@@ -71,8 +103,6 @@ async function gradeAssessments(assessmentLinksObj) {
         case 'Ruby 1':
         case 'Ruby 2':
         case 'Ruby 2R':
-        case 'Rails 2':
-        case 'Rails 2R':
             gradingScript = 'rubyGradingScript.sh';
             break;
         case 'Rails 1':
@@ -80,7 +110,11 @@ async function gradeAssessments(assessmentLinksObj) {
             gradingScript = 'railsGradingScript.sh';
             break;
         case 'Rails Olympics':
-            gradingScript = 'railsOlympicsGradingScript.sh'
+            gradingScript = 'railsOlympicsGradingScript.sh';
+            break;
+        case 'Rails 2':
+        case 'Rails 2R':
+            gradingScript = 'rails2GradingScript.sh';
             break;
         case 'Javascript 1':
         case 'Javascript 1R':
@@ -101,7 +135,7 @@ async function gradeAssessments(assessmentLinksObj) {
         let newName = name.split(' ').join('');
         let command = `chmod +x ~/Desktop/assessment_grading_bot/gradingScripts/${gradingScript} && ~/Desktop/assessment_grading_bot/gradingScripts/${gradingScript} "${newLink}" "${newName}"`;
         const result = await new Promise((resolve, reject) => {
-            exec(command, { timeout: 60000 }, (error, stdout, stderr) => {
+            exec(command, { timeout: 120000 }, (error, stdout, stderr) => {
                 if (error) {
                     console.log(`error: ${error.message}`);
                 }
@@ -234,7 +268,7 @@ async function inputScoresGoogle(scoresData) {
             startingCol = 'AE';
             break;
         case assessName == 'Rails 2':
-            startingCol = 'AF';
+            startingCol = 'AG';
             break;
         case assessName == 'Rails 2R':
             startingCol = 'AG';
@@ -275,7 +309,7 @@ async function inputScoresGoogle(scoresData) {
             let last = student.split(') ')[1];
             name = first + ' ' + last;
         }
-        formattedScoreData.push((scoresData[assessName][name] || ['']));
+        formattedScoreData.push((scoresData[assessName][name] || []));
     }
     
 
@@ -295,15 +329,17 @@ async function updateScores(){
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     const loggedInPT = await loginPT(page);
-    console.log('Getting Scores...');
-    const scoresData = await getScores(loggedInPT);
-    await page.close();
-    await browser.close();
-    console.log('Grading Assessments...');
-    console.log('');
-    const scores = await gradeAssessments(scoresData);
-    console.log(scores);
-    await inputScoresGoogle(scores);
+    console.log('Checking Submissions...');
+    await monitor(page);
+    // console.log('Getting Scores...');
+    // const scoresData = await getScores(loggedInPT);
+    // await page.close();
+    // await browser.close();
+    // console.log('Grading Assessments...');
+    // console.log('');
+    // const scores = await gradeAssessments(scoresData);
+    // console.log(scores);
+    // await inputScoresGoogle(scores);
 }
 
 updateScores();
