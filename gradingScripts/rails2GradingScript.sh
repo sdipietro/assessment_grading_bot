@@ -6,6 +6,8 @@ cd ~/Downloads
 
 cd Assessments
 
+rm -rf ~/Downloads/Assessments/$2
+
 wget -q $1 -O ~/Downloads/Assessments/$2.zip
 
 unzip -q -d ~/Downloads/Assessments/$2 $2.zip
@@ -13,12 +15,6 @@ unzip -q -d ~/Downloads/Assessments/$2 $2.zip
 rm $2.zip
 
 cd $2
-
-# wget https://s3-us-west-2.amazonaws.com/aa-progress-tracker/score_files/zips/000/060/071/original/ -O ~/Downloads/Assessments/n.zip
-
-# unzip -d ~/Downloads/Assessments/n n.zip
-
-# cd n
 
 rm -rf __MACOSX
 
@@ -43,5 +39,4 @@ else
     SCORE='Unable To Run Specs'
 fi
 
-# echo "$2 : $SCORE" >> ~/Desktop/assessment_grading_bot/scores_data.txt
 echo "$2 : $SCORE"

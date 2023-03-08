@@ -60,7 +60,7 @@ async function getScores(page) {
 }
 
 async function monitor (page, prevSubmissions = {}) {
-    // console.log('Checking Submissions...');
+    console.log(`Checking Submissions...`);
     await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
     const newSubmissions = await getScores(page);
     let assessName = Object.keys(newSubmissions)[0];
@@ -72,18 +72,19 @@ async function monitor (page, prevSubmissions = {}) {
             gradeThese[assessName][name] = newSubmissions[assessName][name];
         }
     }
-    if (Object.values(gradeThese[assessName]) != 0) {
+    if (Object.values(gradeThese[assessName]).length != 0) {
         console.log('Grading Assessments...');
         console.log('');
         const scores = await gradeAssessments(gradeThese);
         console.log(scores);
+        console.log('');
         await inputScoresGoogle(scores);
     } else {
-        console.log('Nothing to grade. Checking...');
+        console.log(`No new submissions for ${assessName}`);
         console.log('');
     }
     
-    await new Promise(_ => setTimeout(_, 10000))
+    await new Promise(_ => setTimeout(_, 10000));
     monitor (page, newSubmissions);
 }
 
@@ -93,6 +94,7 @@ async function gradeAssessments(assessmentLinksObj) {
     let links = (assessmentLinksObj[assessName]);
     let gradingScript = '';
     console.log(assessName);
+    console.log('');
 
     switch (assessName) {
         case 'FA1P':
@@ -106,7 +108,7 @@ async function gradeAssessments(assessmentLinksObj) {
             break;
         case 'Rails 1':
         case 'Rails 1R':
-            gradingScript = 'railsGradingScript.sh';
+            gradingScript = 'rails1GradingScript.sh';
             break;
         case 'Rails Olympics':
             gradingScript = 'railsOlympicsGradingScript.sh';
@@ -115,8 +117,8 @@ async function gradeAssessments(assessmentLinksObj) {
         case 'Rails 2R':
             gradingScript = 'rails2GradingScript.sh';
             break;
-        case 'Javascript 1':
-        case 'Javascript 1R':
+        case 'JavaScript 1':
+        case 'JavaScript 1R':
             gradingScript = 'javascriptGradingScript.sh';
             break;
         case 'React 1':
@@ -134,7 +136,7 @@ async function gradeAssessments(assessmentLinksObj) {
         let newName = name.split(' ').join('');
         let command = `chmod +x ~/Desktop/assessment_grading_bot/gradingScripts/${gradingScript} && ~/Desktop/assessment_grading_bot/gradingScripts/${gradingScript} "${newLink}" "${newName}"`;
         const result = await new Promise((resolve, reject) => {
-            exec(command, { timeout: 120000 }, (error, stdout, stderr) => {
+            exec(command, { timeout: 180000 }, (error, stdout, stderr) => {
                 if (error) {
                     console.log(`error: ${error.message}`);
                 }
@@ -200,15 +202,30 @@ async function gradeAssessments(assessmentLinksObj) {
             } else {
                 scores[assessName][name] = 0;
             }
+        } else if (assessName == 'JavaScript 1' || assessName == 'JavaScript 1R') {
+            //Jasmine Specs
+            let specs;
+            let examples;
+            let failures;
+            let grade;
+            if (result.includes(' : ') && result.includes('spec')) {
+                specs = result.split(' : ')[1];
+                examples = parseInt(specs.split(' examples,')[0]);
+                failures = parseInt(specs.split(', ')[1].split(' ')[0]);
+                grade = examples - failures;
+                scores[assessName][name] = [grade];
+            } else {
+                scores[assessName][name] = 0;
+            }
         } else {
-            //All the other assessments are way easier:
+            //All the other assessments are much easier to grade:
             let specs;
             let examples;
             let failures;
             let grade;
             if (result.includes(' : ') && result.includes('failure')) {
                 specs = result.split(' : ')[1];
-                examples = parseInt(specs.split(' examples,')[0]);
+                examples = parseInt(specs.split(' specs,')[0]);
                 failures = parseInt(specs.split(', ')[1].split(' ')[0]);
                 grade = examples - failures;
                 scores[assessName][name] = [grade];
@@ -223,7 +240,8 @@ async function gradeAssessments(assessmentLinksObj) {
 }
 
 async function inputScoresGoogle(scoresData) {
-    console.log('Inputting scores in google sheets...')
+    console.log('Inputting scores in google sheets...');
+    console.log('');
     const auth = new google.auth.GoogleAuth({
         keyFile: path.join(__dirname, "google_creds.json"),
         scopes: "https://www.googleapis.com/auth/spreadsheets",
@@ -267,15 +285,15 @@ async function inputScoresGoogle(scoresData) {
             startingCol = 'AE';
             break;
         case assessName == 'Rails 2':
-            startingCol = 'AG';
+            startingCol = 'AF';
             break;
         case assessName == 'Rails 2R':
             startingCol = 'AG';
             break;
-        case assessName == 'Javascript 1':
-            startingCol = 'AH';
+        case assessName == 'JavaScript 1':
+            startingCol = 'AI';
             break;
-        case assessName == 'Javascript 1R':
+        case assessName == 'JavaScript 1R':
             startingCol = 'AI';
             break;
         case assessName == 'React 1':
@@ -328,8 +346,7 @@ async function updateScores(){
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     const loggedInPT = await loginPT(page);
-    console.log('Checking Submissions...');
-    await monitor(page);
+    await monitor(loggedInPT);
     // console.log('Getting Scores...');
     // const scoresData = await getScores(loggedInPT);
     // await page.close();

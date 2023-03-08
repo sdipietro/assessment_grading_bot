@@ -6,6 +6,8 @@ cd ~/Downloads
 
 cd Assessments
 
+rm -rf ~/Downloads/Assessments/$2
+
 wget -q $1 -O ~/Downloads/Assessments/$2.zip
 
 unzip -q -d ~/Downloads/Assessments/$2 $2.zip
