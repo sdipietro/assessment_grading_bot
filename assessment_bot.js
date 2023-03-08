@@ -4,7 +4,7 @@ const { exec } = require("child_process");
 const { google } = require("googleapis");
 const path = require('path');
 
-// const progressTrackerScoresUrl = 'https://progress.appacademy.io/cycles/305/scores';
+// const progressTrackerScoresUrl = 'https://progress.appacademy.io/cycles/309/scores';
 const progressTrackerScoresUrl = 'https://progress.appacademy.io/scores';
 const progressTrackerEmail = credentials.aAemail;
 const progressTrackerPassword = credentials.aApassword;
@@ -24,14 +24,14 @@ async function loginPT(page) {
 
 async function getScores(page) {
     const studentList = await page.evaluate(() => {
-        // let assessmentName = document.getElementsByTagName('thead')[0].getElementsByTagName('th')[6].innerText;
-        let assessmentName = document.getElementsByTagName('thead')[0].getElementsByClassName('a-title open-top open-left')[0].innerText;
+        let assessmentColumn = 2;
+        let assessmentName = document.getElementsByTagName('thead')[0].getElementsByTagName('th')[assessmentColumn].innerText;
+        // let assessmentName = document.getElementsByTagName('thead')[0].getElementsByClassName('a-title open-top open-left')[0].innerText;
         let scoresObj = {[assessmentName]: {}};
         let studentRows = Array.from(document.getElementsByTagName('tbody')[0].getElementsByTagName('tr'));
         studentRows.forEach((ele) => {
             let name = ele.getElementsByTagName('td')[1].getElementsByTagName('a')[0].innerText;
-            // let submissionsArr = ele.getElementsByTagName('td')[7].getElementsByTagName('a');
-            let submissionsArr = ele.getElementsByTagName('td')[3].getElementsByTagName('a');
+            let submissionsArr = ele.getElementsByTagName('td')[assessmentColumn + 1].getElementsByTagName('a');
             let submissionLink = '';
             if (submissionsArr && submissionsArr.length > 1) {
                 let longestTime = 0;
@@ -44,8 +44,7 @@ async function getScores(page) {
                     }
                 });
             } else {
-                submissionLink = ele.getElementsByTagName('td')[3].getElementsByTagName('a')[0];
-                // submissionLink = ele.getElementsByTagName('td')[7].getElementsByTagName('a')[0];
+                submissionLink = ele.getElementsByTagName('td')[assessmentColumn + 1].getElementsByTagName('a')[0];
             }
             
             if (submissionLink) {
@@ -59,40 +58,12 @@ async function getScores(page) {
     return studentList;
 }
 
-async function monitor (page, prevSubmissions = {}) {
-    console.log(`Checking Submissions...`);
-    await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
-    const newSubmissions = await getScores(page);
-    let assessName = Object.keys(newSubmissions)[0];
-    const gradeThese = {};
-    gradeThese[assessName] = {};
-
-    for (let name in newSubmissions[assessName]) {
-        if (!prevSubmissions[assessName] || !prevSubmissions[assessName][name] || (newSubmissions[assessName][name] != prevSubmissions[assessName][name])) {
-            gradeThese[assessName][name] = newSubmissions[assessName][name];
-        }
-    }
-    if (Object.values(gradeThese[assessName]).length != 0) {
-        console.log('Grading Assessments...');
-        console.log('');
-        const scores = await gradeAssessments(gradeThese);
-        console.log(scores);
-        console.log('');
-        await inputScoresGoogle(scores);
-    } else {
-        console.log(`No new submissions for ${assessName}`);
-        console.log('');
-    }
-    
-    await new Promise(_ => setTimeout(_, 10000));
-    monitor (page, newSubmissions);
-}
-
 async function gradeAssessments(assessmentLinksObj) {
     let assessName = Object.keys(assessmentLinksObj)[0];
     let scores = {[assessName]: {}};
     let links = (assessmentLinksObj[assessName]);
     let gradingScript = '';
+    let timeoutLimit;
     console.log(assessName);
     console.log('');
 
@@ -105,25 +76,31 @@ async function gradeAssessments(assessmentLinksObj) {
         case 'Ruby 2':
         case 'Ruby 2R':
             gradingScript = 'rubyGradingScript.sh';
+            timeoutLimit = 35000;
             break;
         case 'Rails 1':
         case 'Rails 1R':
             gradingScript = 'rails1GradingScript.sh';
+            timeoutLimit = 120000;
             break;
         case 'Rails Olympics':
             gradingScript = 'railsOlympicsGradingScript.sh';
+            timeoutLimit = 60000;
             break;
         case 'Rails 2':
         case 'Rails 2R':
             gradingScript = 'rails2GradingScript.sh';
+            timeoutLimit = 75000;
             break;
         case 'JavaScript 1':
         case 'JavaScript 1R':
             gradingScript = 'javascriptGradingScript.sh';
+            timeoutLimit = 25000;
             break;
         case 'React 1':
         case 'React 1R':
             gradingScript = 'reactGradingScript.sh';
+            timeoutLimit = 60000;
             break;
         default:
             console.log('Error: Wrong Assessment Name. Cannot find script');
@@ -136,9 +113,10 @@ async function gradeAssessments(assessmentLinksObj) {
         let newName = name.split(' ').join('');
         let command = `chmod +x ~/Desktop/assessment_grading_bot/gradingScripts/${gradingScript} && ~/Desktop/assessment_grading_bot/gradingScripts/${gradingScript} "${newLink}" "${newName}"`;
         const result = await new Promise((resolve, reject) => {
-            exec(command, { timeout: 180000 }, (error, stdout, stderr) => {
+            exec(command, { timeout: timeoutLimit }, (error, stdout, stderr) => {
                 if (error) {
-                    console.log(`error: ${error.message}`);
+                    console.log(`${newName} : Unable To Run Specs`)
+                    // console.log(`error: ${error.message}`);
                 }
                 // if (stderr) {
                 //     console.log(`stderr: ${stderr}`);
@@ -217,6 +195,19 @@ async function gradeAssessments(assessmentLinksObj) {
             } else {
                 scores[assessName][name] = 0;
             }
+        } else if (assessName == 'React 1' || assessName == 'React 1R') {
+            //Jest Specs
+            let specs;
+            let passed;
+            let grade;
+            if (result.includes(' : ') && result.includes('total')) {
+                specs = result.split(' : ')[1];
+                passed = parseInt(specs.split(' passed,')[0].slice(-2));
+                grade = passed;
+                scores[assessName][name] = [grade];
+            } else {
+                scores[assessName][name] = 0;
+            }
         } else {
             //All the other assessments are much easier to grade:
             let specs;
@@ -291,7 +282,7 @@ async function inputScoresGoogle(scoresData) {
             startingCol = 'AG';
             break;
         case assessName == 'JavaScript 1':
-            startingCol = 'AI';
+            startingCol = 'AH';
             break;
         case assessName == 'JavaScript 1R':
             startingCol = 'AI';
@@ -341,22 +332,75 @@ async function inputScoresGoogle(scoresData) {
     });
 }
 
-async function updateScores(){
+async function gradeAllStudents(){
     console.log('Opening Virtual Browser...');
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     const loggedInPT = await loginPT(page);
-    await monitor(loggedInPT);
-    // console.log('Getting Scores...');
-    // const scoresData = await getScores(loggedInPT);
-    // await page.close();
-    // await browser.close();
-    // console.log('Grading Assessments...');
-    // console.log('');
-    // const scores = await gradeAssessments(scoresData);
-    // console.log(scores);
+    console.log('Getting Scores...');
+    const scoresData = await getScores(loggedInPT);
+    await page.close();
+    await browser.close();
+    console.log('Grading Assessments...');
+    console.log('');
+    const scores = await gradeAssessments(scoresData);
+    console.log(scores);
     // await inputScoresGoogle(scores);
 }
 
-updateScores();
+async function gradeSingleStudent(name){
+    console.log('Opening Virtual Browser...');
+    const browser = await puppeteer.launch({headless: true});
+    const page = await browser.newPage();
+    const loggedInPT = await loginPT(page);
+    console.log('Getting Scores...');
+    const scoresData = await getScores(loggedInPT);
+    await page.close();
+    await browser.close();
+    console.log('Grading Assessments...');
+    console.log('');
+    const scores = await gradeAssessments(scoresData);
+    console.log(scores);
+    // await inputScoresGoogle(scores);
+}
+
+async function beginMonitor(page, prevSubmissions = {}) {
+    console.log(`Checking Submissions...`);
+    await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
+    const newSubmissions = await getScores(page);
+    let assessName = Object.keys(newSubmissions)[0];
+    const gradeThese = {};
+    gradeThese[assessName] = {};
+
+    for (let name in newSubmissions[assessName]) {
+        if (!prevSubmissions[assessName] || !prevSubmissions[assessName][name] || (newSubmissions[assessName][name] != prevSubmissions[assessName][name])) {
+            gradeThese[assessName][name] = newSubmissions[assessName][name];
+        }
+    }
+    if (Object.values(gradeThese[assessName]).length != 0) {
+        console.log('Grading Assessments...');
+        console.log('');
+        const scores = await gradeAssessments(gradeThese);
+        console.log(scores);
+        console.log('');
+        // await inputScoresGoogle(scores);
+    } else {
+        console.log(`No new submissions for ${assessName}`);
+        console.log('');
+    }
+    
+    await new Promise(_ => setTimeout(_, 10000));
+    beginMonitor (page, newSubmissions);
+}
+
+
+async function monitorMode(){
+    console.log('Opening Virtual Browser...');
+    const browser = await puppeteer.launch({headless: true});
+    const page = await browser.newPage();
+    const loggedInPT = await loginPT(page);
+    await beginMonitor(loggedInPT);
+}
+
+monitorMode();
 

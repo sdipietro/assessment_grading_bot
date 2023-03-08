@@ -47,6 +47,7 @@ then
     # bundle exec rails db:drop
    
     SQLSCORE=$(grep '^[0-9][0-9]* examples, [0-9][0-9]* failure' ~/Desktop/assessment_grading_bot/log.txt)
+    if  [[ -z  $SQLSCORE  ]]; then SQLSCORE='Unable To Run Specs'; fi
 else
     SQLSCORE='Unable To Run Specs'
 fi
@@ -78,6 +79,7 @@ then
     bundle exec rspec > ~/Desktop/assessment_grading_bot/log.txt;
    
     ACTIVERECORDSCORE=$(grep '^[0-9][0-9]* examples, [0-9][0-9]* failure' ~/Desktop/assessment_grading_bot/log.txt)
+    if  [[ -z  $ACTIVERECORDSCORE  ]]; then ACTIVERECORDSCORE='Unable To Run Specs'; fi
 else
     ACTIVERECORDSCORE='Unable To Run Specs'
 fi
@@ -108,6 +110,7 @@ then
     bundle exec rspec > ~/Desktop/assessment_grading_bot/log.txt;
    
     MIGRATIONSSCORE=$(grep '^[0-9][0-9]* examples, [0-9][0-9]* failure' ~/Desktop/assessment_grading_bot/log.txt)
+    if  [[ -z  $MIGRATIONSSCORE  ]]; then MIGRATIONSSCORE='Unable To Run Specs'; fi
 else
     MIGRATIONSSCORE='Unable To Run Specs'
 fi
@@ -138,15 +141,13 @@ then
     bundle exec rspec > ~/Desktop/assessment_grading_bot/log.txt;
    
     ASSOCIATIONSSCORE=$(grep '^[0-9][0-9]* examples, [0-9][0-9]* failure' ~/Desktop/assessment_grading_bot/log.txt)
+    if  [[ -z  $ASSOCIATIONSSCORE  ]]; then ASSOCIATIONSSCORE='Unable To Run Specs'; fi
 else
     ASSOCIATINSSCORE='Unable To Run Specs'
 fi
 
 echo "Associations : $ASSOCIATIONSSCORE"
 
-# echo $2 : SQL
-
-# echo "$2 : $SCORE" >> ~/Desktop/assessment_grading_bot/scores_data.txt
 # echo "Name : $2"
 # echo "SQL : $SQLSCORE"
 # echo "Active Record : $ACTIVERECORDSCORE"

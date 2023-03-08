@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCORE=''
+
 echo '' > ~/Desktop/assessment_grading_bot/log.txt
 
 cd ~/Downloads
@@ -43,6 +45,7 @@ then
     #     SCORE='Unable To Run Specs'
     # fi
     SCORE=$(grep '^[0-9][0-9]* examples, [0-9][0-9]* failure' ~/Desktop/assessment_grading_bot/log.txt)
+    if  [[ -z  $SCORE  ]]; then SCORE='Unable To Run Specs'; fi
 else
     SCORE='Unable To Run Specs'
 fi
