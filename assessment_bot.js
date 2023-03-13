@@ -4,10 +4,28 @@ const { exec } = require("child_process");
 const { google } = require("googleapis");
 const path = require('path');
 
-// const progressTrackerScoresUrl = 'https://progress.appacademy.io/cycles/309/scores';
-const progressTrackerScoresUrl = 'https://progress.appacademy.io/scores';
+// Setup Instructions:
+// 1. Set progressTrackerEmail and progressTrackerPassword to your login credentials
+// as an instructor. Input as strings
 const progressTrackerEmail = credentials.aAemail;
 const progressTrackerPassword = credentials.aApassword;
+
+// 2. Set googleSheetsScoreSheetId to the google sheets id for your cohort's scores sheet 
+// The id is the part between docs.google.com/spreadsheets/d/ and /edit
+// Input as a string.
+const googleSheetsScoreSheetId = credentials.googleSheetsId;
+
+// 3. Create a file in this directroy called google_creds.json
+// Ask Steve D for the google credentials to access inputting to google sheets
+
+// You can also change the cohort that you are grading.
+// This is optional. If you do not, the script will default to the cohort that you are assigned
+// to as an instructor
+// To change:
+// Comment in the line below and change the cohort number from 310 to the cohort that you want to grade
+// const progressTrackerScoresUrl = 'https://progress.appacademy.io/cycles/310/scores';
+// Then, comment out this line:
+const progressTrackerScoresUrl = 'https://progress.appacademy.io/scores';
 
 async function loginPT(page) {
     console.log('Visiting Progress Tracker...');
@@ -23,6 +41,9 @@ async function loginPT(page) {
 }
 
 async function getScores(page) {
+    await page.waitForSelector('thead', {
+        visible: true,
+    });
     const studentList = await page.evaluate(() => {
         let assessmentColumn = 2;
         let assessmentName = document.getElementsByTagName('thead')[0].getElementsByTagName('th')[assessmentColumn].innerText;
@@ -229,6 +250,18 @@ async function gradeAssessments(assessmentLinksObj) {
     }
     return scores;
 }
+// thanks stackoverflow
+function columnToLetter(column)
+{
+  var temp, letter = '';
+  while (column > 0)
+  {
+    temp = (column - 1) % 26;
+    letter = String.fromCharCode(temp + 65) + letter;
+    column = (column - temp - 1) / 26;
+  }
+  return letter;
+}
 
 async function inputScoresGoogle(scoresData) {
     console.log('Inputting scores in google sheets...');
@@ -240,62 +273,99 @@ async function inputScoresGoogle(scoresData) {
 
     const client = await auth.getClient();
     const googleSheets = google.sheets({ version: "v4", auth: client });
-    const spreadsheetId = "1sKwWeKPq8LP8qYiU6-T1dMyHUkI-YovyLz40SV-c6eU";
+    const spreadsheetId = googleSheetsScoreSheetId;
     let assessName = Object.keys(scoresData)[0];
-    let startingCol;
-
-    switch (true) {
-        case assessName == 'FA1P':
-            startingCol = 'E';
-            break;
-        case assessName == 'FA1':
-            startingCol = 'F';
-            break;
-        case assessName == 'FA2':
-            startingCol = 'G';
-            break;
-        case assessName == 'Ruby 1 Prep':
-            startingCol = 'H';
-            break;
-        case assessName == 'Ruby 1':
-            startingCol = 'I';
-            break;
-        case assessName == 'Ruby 2':
-            startingCol = 'M';
-            break;
-        case assessName == 'Ruby 2R':
-            startingCol = 'Q';
-            break;
-        case assessName == 'Rails 1':
-            startingCol = 'S';
-            break;
-        case assessName == 'Rails 1R':
-            startingCol = 'X';
-            break;
-        case assessName == 'Rails Olympics':
-            startingCol = 'AE';
-            break;
-        case assessName == 'Rails 2':
-            startingCol = 'AF';
-            break;
-        case assessName == 'Rails 2R':
-            startingCol = 'AG';
-            break;
-        case assessName == 'JavaScript 1':
-            startingCol = 'AH';
-            break;
-        case assessName == 'JavaScript 1R':
-            startingCol = 'AI';
-            break;
-        case assessName == 'React 1':
-            startingCol = 'AJ';
-            break;
-        case assessName == 'React 1R':
-            startingCol = 'AK';
-            break;
-        default:
-            console.log('Error: Wrong Assessment Name.');
+        
+    const assessmentMap = { 
+        'FA1P': 'Fo1p',
+        'FA1': 'Fo1',
+        'FA2': 'Fo2',
+        'Ruby 1 Prep': 'Ru1p',
+        'Ruby 1': 'Ru1',
+        'Ruby 2': 'Ru2',
+        'Ruby 2R': 'Ru2r',
+        'Rails 1': 'Ra1',
+        'Rails 1': 'Ra1r',
+        'Rails Olympics': 'RaO',
+        'Rails 2': 'Ra2',
+        'Rails 2R': 'Ra2r',
+        'JavaScript 1': 'JS1',
+        'JavaScript 1R': 'JS1r',
+        'React 1': 'Re1',
+        'React 1R': 'Re1r'
     }
+    let googleSheetsAssessName = assessmentMap[assessName];
+
+    // switch (true) {
+    //     case assessName == 'FA1P':
+    //         startingCol = 'E';
+    //         break;
+    //     case assessName == 'FA1':
+    //         startingCol = 'F';
+    //         break;
+    //     case assessName == 'FA2':
+    //         startingCol = 'G';
+    //         break;
+    //     case assessName == 'Ruby 1 Prep':
+    //         startingCol = 'H';
+    //         break;
+    //     case assessName == 'Ruby 1':
+    //         startingCol = 'I';
+    //         break;
+    //     case assessName == 'Ruby 2':
+    //         startingCol = 'M';
+    //         break;
+    //     case assessName == 'Ruby 2R':
+    //         startingCol = 'Q';
+    //         break;
+    //     case assessName == 'Rails 1':
+    //         startingCol = 'S';
+    //         break;
+    //     case assessName == 'Rails 1R':
+    //         startingCol = 'X';
+    //         break;
+    //     case assessName == 'Rails Olympics':
+    //         startingCol = 'AE';
+    //         break;
+    //     case assessName == 'Rails 2':
+    //         startingCol = 'AF';
+    //         break;
+    //     case assessName == 'Rails 2R':
+    //         startingCol = 'AG';
+    //         break;
+    //     case assessName == 'JavaScript 1':
+    //         startingCol = 'AH';
+    //         break;
+    //     case assessName == 'JavaScript 1R':
+    //         startingCol = 'AI';
+    //         break;
+    //     case assessName == 'React 1':
+    //         startingCol = 'AJ';
+    //         break;
+    //     case assessName == 'React 1R':
+    //         startingCol = 'AK';
+    //         break;
+    //     default:
+    //         console.log('Error: Wrong Assessment Name.');
+    // }
+
+    const getColumnHeaders = await googleSheets.spreadsheets.values.get({
+        auth,
+        spreadsheetId,
+        range: 'Sheet 1!1:1',
+    });
+    const colHeaders = getColumnHeaders.data.values[0];
+
+    let startingCol;
+    if (assessName === 'Ruby 2' || assessName === 'Ruby 2R') {
+        startingCol = colHeaders.indexOf(googleSheetsAssessName) + 3;
+    } else if (assessName === 'Rails 1' || assessName === 'Rails 1R' || assessName === 'Rails Olympics') {
+        startingCol = colHeaders.indexOf(googleSheetsAssessName) + 1;
+    } else {
+        startingCol = colHeaders.indexOf(googleSheetsAssessName);
+    }
+
+    const colLetter = columnToLetter(startingCol + 1);
 
     const getRows = await googleSheets.spreadsheets.values.get({
         auth,
@@ -303,6 +373,7 @@ async function inputScoresGoogle(scoresData) {
         range: 'Sheet 1!A2:A52',
     });
     const studentArr = getRows.data.values;
+
     const gooogleSheetStudentsIndexes = {};
   
     for (let i = 0; i < studentArr.length; i++) {
@@ -324,7 +395,7 @@ async function inputScoresGoogle(scoresData) {
     await googleSheets.spreadsheets.values.update({
         auth,
         spreadsheetId,
-        range: `Sheet 1!${startingCol}2:$AZ50`,
+        range: `Sheet 1!${colLetter}2:$AZ50`,
         valueInputOption: "USER_ENTERED",
         resource: {
             values: formattedScoreData
@@ -402,5 +473,5 @@ async function monitorMode(){
     await beginMonitor(loggedInPT);
 }
 
-monitorMode();
 
+monitorMode();

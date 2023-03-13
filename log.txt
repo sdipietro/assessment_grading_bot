@@ -1,1 +1,78 @@
-35 specs, 11 failures
+
+my_map!
+  should accept an array and a block as args
+  should mutate elements of the input array by replacing them with their result when passed into the block (FAILED - 1)
+  should not use the built-in Array#map or Array#map!
+
+two?
+  should accept an array and a block as args
+  should return a boolean indicating if there are exactly two elements of the array that return true when passed into the block
+
+nor_select
+  should accept an array and two procs as args
+  should return a new array containing elements of the original array that result in false when passed into both procs
+
+array_of_hash_sum
+  should accept an array containing hashes as an arg
+  should return the total sum of all values in the hashes
+
+slangify
+  should accept a sentence string as an arg
+  should return a new sentence where every word of the original sentence has its first vowel (a,e,i,o,u) removed. (FAILED - 2)
+
+char_counter
+  should accept a string as the first arg and any number of additional args of single characters (FAILED - 3)
+  should return a hash containing the counts of the additional character args in the first string arg (FAILED - 4)
+  when only a single string arg is passed
+    should return a hash containing the counts of all characters in the string (FAILED - 5)
+
+Failures:
+
+  1) my_map! should mutate elements of the input array by replacing them with their result when passed into the block
+     Failure/Error: expect(arr_1).to eq([1, 4, 9, 16])
+       
+       expected: [1, 4, 9, 16]
+            got: [1, 2, 3, 4]
+       
+       (compared using ==)
+     # ./spec/assessment_1_spec.rb:11:in `block (2 levels) in <top (required)>'
+
+  2) slangify should return a new sentence where every word of the original sentence has its first vowel (a,e,i,o,u) removed.
+     Failure/Error: expect(slangify("follow the yellow brick road")).to eq("fllow th yllow brck rad")
+       
+       expected: "fllow th yllow brck rad"
+            got: nil
+       
+       (compared using ==)
+     # ./spec/assessment_1_spec.rb:95:in `block (2 levels) in <top (required)>'
+
+  3) char_counter should accept a string as the first arg and any number of additional args of single characters
+     Failure/Error: expect { char_counter('mississippi', 'm', 'i') }.to_not raise_error
+       expected no Exception, got #<NoMethodError: undefined method `char_counter' for #<RSpec::ExampleGroups::CharCounter "should accept a string as the first arg and any number of additional args of single characters" (./spec/assessment_1_spec.rb:102)>> with backtrace:
+         # ./spec/assessment_1_spec.rb:103:in `block (3 levels) in <top (required)>'
+         # ./spec/assessment_1_spec.rb:103:in `block (2 levels) in <top (required)>'
+     # ./spec/assessment_1_spec.rb:103:in `block (2 levels) in <top (required)>'
+
+  4) char_counter should return a hash containing the counts of the additional character args in the first string arg
+     Failure/Error: expect(char_counter('mississippi', 'm', 'i')).to eq({'m'=>1, 'i'=>4})
+     NoMethodError:
+       undefined method `char_counter' for #<RSpec::ExampleGroups::CharCounter "should return a hash containing the counts of the additional character args in the first string arg" (./spec/assessment_1_spec.rb:108)>
+     # ./spec/assessment_1_spec.rb:109:in `block (2 levels) in <top (required)>'
+
+  5) char_counter when only a single string arg is passed should return a hash containing the counts of all characters in the string
+     Failure/Error: expect(char_counter('christine')).to eq({"c"=>1, "h"=>1, "r"=>1, "i"=>2, "s"=>1, "t"=>1, "n"=>1, "e"=>1 })
+     NoMethodError:
+       undefined method `char_counter' for #<RSpec::ExampleGroups::CharCounter::WhenOnlyASingleStringArgIsPassed "should return a hash containing the counts of all characters in the string" (./spec/assessment_1_spec.rb:116)>
+     # ./spec/assessment_1_spec.rb:117:in `block (3 levels) in <top (required)>'
+
+Finished in 0.02105 seconds (files took 0.08837 seconds to load)
+14 examples, 5 failures
+
+Failed examples:
+
+rspec ./spec/assessment_1_spec.rb:8 # my_map! should mutate elements of the input array by replacing them with their result when passed into the block
+rspec ./spec/assessment_1_spec.rb:94 # slangify should return a new sentence where every word of the original sentence has its first vowel (a,e,i,o,u) removed.
+rspec ./spec/assessment_1_spec.rb:102 # char_counter should accept a string as the first arg and any number of additional args of single characters
+rspec ./spec/assessment_1_spec.rb:108 # char_counter should return a hash containing the counts of the additional character args in the first string arg
+rspec ./spec/assessment_1_spec.rb:116 # char_counter when only a single string arg is passed should return a hash containing the counts of all characters in the string
+
