@@ -3,6 +3,8 @@ const puppeteer = require('puppeteer');
 const { exec } = require("child_process");
 const { google } = require("googleapis");
 const path = require('path');
+const process = require('process');
+const prompt = require("prompt-sync")({ sigint: true });
 
 // Setup Instructions:
 // 1. Set progressTrackerEmail and progressTrackerPassword to your login credentials
@@ -40,12 +42,27 @@ async function loginPT(page) {
     return page;
 }
 
-async function getScores(page) {
+async function getScores(page, assessment) {
     await page.waitForSelector('thead', {
         visible: true,
     });
-    const studentList = await page.evaluate(() => {
-        let assessmentColumn = 2;
+    const studentList = await page.evaluate((assessment) => {
+        let assessmentColumn;
+        let found = false;
+        if (assessment) {
+            let tableHeaders = Array.from(document.getElementsByTagName('thead')[0].getElementsByTagName('th'));
+            for (let i = 0; i < tableHeaders.length; i++) {
+                if (tableHeaders[i].innerText.toLowerCase() === assessment.toLowerCase()) {
+                    found = true;
+                    assessmentColumn = i;
+                }
+            }
+            if (found === false) {
+                throw (`Incorrect Assesment Name ${assessment}`);
+            }
+        } else {
+            assessmentColumn = 2;
+        }
         let assessmentName = document.getElementsByTagName('thead')[0].getElementsByTagName('th')[assessmentColumn].innerText;
         // let assessmentName = document.getElementsByTagName('thead')[0].getElementsByClassName('a-title open-top open-left')[0].innerText;
         let scoresObj = {[assessmentName]: {}};
@@ -72,21 +89,36 @@ async function getScores(page) {
                 scoresObj[assessmentName][name] = submissionLink.href;
             }
         });
-        
+      
         return scoresObj;
-    });
-    
+    }, assessment);
+
     return studentList;
 }
 
-async function gradeAssessments(assessmentLinksObj) {
+async function gradeAssessments(assessmentLinksObj, name) {
     let assessName = Object.keys(assessmentLinksObj)[0];
-    let scores = {[assessName]: {}};
     let links = (assessmentLinksObj[assessName]);
+    if (name) {
+        let nameLowercase = name.toLowerCase();
+        let submission = links[Object.keys(links).find(key => key.toLowerCase() === nameLowercase)];
+        if (submission) {
+            assessmentLinksObj = {[assessName]: {[name]: submission}};
+            links = (assessmentLinksObj[assessName]);
+        } else {
+            throw (`No submissions for ${name}. Check spelling.`);
+        }
+    }
+    let scores = {[assessName]: {}};
     let gradingScript = '';
     let timeoutLimit;
-    console.log(assessName);
-    console.log('');
+    if (assessName === 'Rails 1' || assessName === 'Rails 1R') {
+        console.log(`${assessName}. Please wait, I take a long time to grade.`);
+        console.log('');
+    } else {
+        console.log(assessName);
+        console.log('');
+    }
 
     switch (assessName) {
         case 'FA1P':
@@ -126,7 +158,7 @@ async function gradeAssessments(assessmentLinksObj) {
         default:
             console.log('Error: Wrong Assessment Name. Cannot find script');
     }
-
+  
     for (let name in links) {
         let link = links[name].split('?');
         link.pop();
@@ -250,12 +282,11 @@ async function gradeAssessments(assessmentLinksObj) {
     }
     return scores;
 }
-// thanks stackoverflow
-function columnToLetter(column)
-{
+
+// shoutout stackoverflow for this:
+function columnToLetter(column) {
   var temp, letter = '';
-  while (column > 0)
-  {
+  while (column > 0) {
     temp = (column - 1) % 26;
     letter = String.fromCharCode(temp + 65) + letter;
     column = (column - temp - 1) / 26;
@@ -295,59 +326,6 @@ async function inputScoresGoogle(scoresData) {
         'React 1R': 'Re1r'
     }
     let googleSheetsAssessName = assessmentMap[assessName];
-
-    // switch (true) {
-    //     case assessName == 'FA1P':
-    //         startingCol = 'E';
-    //         break;
-    //     case assessName == 'FA1':
-    //         startingCol = 'F';
-    //         break;
-    //     case assessName == 'FA2':
-    //         startingCol = 'G';
-    //         break;
-    //     case assessName == 'Ruby 1 Prep':
-    //         startingCol = 'H';
-    //         break;
-    //     case assessName == 'Ruby 1':
-    //         startingCol = 'I';
-    //         break;
-    //     case assessName == 'Ruby 2':
-    //         startingCol = 'M';
-    //         break;
-    //     case assessName == 'Ruby 2R':
-    //         startingCol = 'Q';
-    //         break;
-    //     case assessName == 'Rails 1':
-    //         startingCol = 'S';
-    //         break;
-    //     case assessName == 'Rails 1R':
-    //         startingCol = 'X';
-    //         break;
-    //     case assessName == 'Rails Olympics':
-    //         startingCol = 'AE';
-    //         break;
-    //     case assessName == 'Rails 2':
-    //         startingCol = 'AF';
-    //         break;
-    //     case assessName == 'Rails 2R':
-    //         startingCol = 'AG';
-    //         break;
-    //     case assessName == 'JavaScript 1':
-    //         startingCol = 'AH';
-    //         break;
-    //     case assessName == 'JavaScript 1R':
-    //         startingCol = 'AI';
-    //         break;
-    //     case assessName == 'React 1':
-    //         startingCol = 'AJ';
-    //         break;
-    //     case assessName == 'React 1R':
-    //         startingCol = 'AK';
-    //         break;
-    //     default:
-    //         console.log('Error: Wrong Assessment Name.');
-    // }
 
     const getColumnHeaders = await googleSheets.spreadsheets.values.get({
         auth,
@@ -403,36 +381,52 @@ async function inputScoresGoogle(scoresData) {
     });
 }
 
-async function gradeAllStudents(){
+async function gradeAllStudents(assessment){
     console.log('Opening Virtual Browser...');
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     const loggedInPT = await loginPT(page);
     console.log('Getting Scores...');
-    const scoresData = await getScores(loggedInPT);
+    const scoresData = await getScores(loggedInPT, assessment);
     await page.close();
     await browser.close();
     console.log('Grading Assessments...');
     console.log('');
     const scores = await gradeAssessments(scoresData);
     console.log(scores);
-    // await inputScoresGoogle(scores);
+    console.log("");
+    const bool = prompt("Input to Google scores sheet? y/n   ");
+    if (bool === 'y') {
+        await inputScoresGoogle(scores);
+    } else if (bool === 'n') {
+        console.log('Scores not inputted');
+    } else {
+        throw ('Unknow input. Type y or n');
+    }
 }
 
-async function gradeSingleStudent(name){
+async function gradeSingleStudent(assessment, name){
     console.log('Opening Virtual Browser...');
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     const loggedInPT = await loginPT(page);
     console.log('Getting Scores...');
-    const scoresData = await getScores(loggedInPT);
+    const scoresData = await getScores(loggedInPT, assessment);
     await page.close();
     await browser.close();
     console.log('Grading Assessments...');
     console.log('');
-    const scores = await gradeAssessments(scoresData);
+    const scores = await gradeAssessments(scoresData, name);
     console.log(scores);
-    // await inputScoresGoogle(scores);
+    console.log("");
+    const bool = prompt("Input to Google scores sheet? y/n   ");
+    if (bool === 'y') {
+        await inputScoresGoogle(scores);
+    } else if (bool === 'n') {
+        console.log('Scores not inputted');
+    } else {
+        throw ('Unknow input. Type y or n');
+    }
 }
 
 async function beginMonitor(page, prevSubmissions = {}) {
@@ -473,5 +467,10 @@ async function monitorMode(){
     await beginMonitor(loggedInPT);
 }
 
-
-monitorMode();
+if (process.argv[2] === '-m') {
+    monitorMode();
+} else if (process.argv[2] && process.argv[3]){
+    gradeSingleStudent(process.argv[2], process.argv[3]);
+} else {
+    gradeAllStudents(process.argv[2]);
+}
