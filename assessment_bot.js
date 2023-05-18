@@ -134,7 +134,7 @@ async function gradeAssessments(assessmentLinksObj, name) {
         case 'Rails 1':
         case 'Rails 1R':
             gradingScript = 'rails1GradingScript.sh';
-            timeoutLimit = 120000;
+            timeoutLimit = 150000;
             break;
         case 'Rails Olympics':
             gradingScript = 'railsOlympicsGradingScript.sh';
@@ -148,7 +148,7 @@ async function gradeAssessments(assessmentLinksObj, name) {
         case 'JavaScript 1':
         case 'JavaScript 1R':
             gradingScript = 'javascriptGradingScript.sh';
-            timeoutLimit = 25000;
+            timeoutLimit = 30000;
             break;
         case 'React 1':
         case 'React 1R':
@@ -337,12 +337,14 @@ async function inputScoresGoogle(scoresData) {
     let startingCol;
     if (assessName === 'Ruby 2' || assessName === 'Ruby 2R') {
         startingCol = colHeaders.indexOf(googleSheetsAssessName) + 3;
-    } else if (assessName === 'Rails 1' || assessName === 'Rails 1R' || assessName === 'Rails Olympics') {
+    } else if (assessName === 'Rails 1' || assessName === 'Rails 1R') {
         startingCol = colHeaders.indexOf(googleSheetsAssessName) + 1;
+    } else if (assessName === 'Rails Olympics') {
+        startingCol = colHeaders.indexOf(googleSheetsAssessName) + 2;
     } else {
         startingCol = colHeaders.indexOf(googleSheetsAssessName);
     }
-
+    
     const colLetter = columnToLetter(startingCol + 1);
 
     const getRows = await googleSheets.spreadsheets.values.get({
@@ -448,7 +450,7 @@ async function beginMonitor(page, prevSubmissions = {}) {
         const scores = await gradeAssessments(gradeThese);
         console.log(scores);
         console.log('');
-        // await inputScoresGoogle(scores);
+        await inputScoresGoogle(scores);
     } else {
         console.log(`No new submissions for ${assessName}`);
         console.log('');
