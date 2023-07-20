@@ -3,3 +3,5 @@ credentials.js
 node_modules/
 google_creds.json
 package-lock.json
+scores_data.txt
+log.txt
