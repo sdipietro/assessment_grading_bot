@@ -529,7 +529,7 @@ async function beginMonitor(page, assessmentName, prevSubmissions = {}) {
 
 async function monitorMode(assessmentName){
     console.log('Opening Virtual Browser...');
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     const loggedInSis = await loginSis(page);
     await beginMonitor(loggedInSis, assessmentName);

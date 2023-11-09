@@ -1,5 +1,7 @@
+Mac Setup Instructions:
+
 1. Ensure you have Node v 16 or greater
-2. cd Desktop
+2. cd Desktop *Must be cloned into Desktop
 3. git clone https://github.com/sdipietro/assessment_grading_bot.git
 4. cd assessment_grading_bot
 5. npm install
