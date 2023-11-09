@@ -1,8 +1,27 @@
 {
+  "name": "assessment_grading_bot",
+  "version": "1.0.0",
+  "description": "1. Ensure you have Node v 16 2. cd Desktop 3. git clone https://github.com/sdipietro/assessment_grading_bot.git 4. cd assessment_grading_bot 5. npm install 6. brew install unzip wget 7. Add PT credentials   - add a 'credentials.js' in the root directory",
+  "main": "assessment_bot.js",
   "dependencies": {
     "child_process": "^1.0.2",
     "googleapis": "^110.0.0",
     "prompt-sync": "^4.2.0",
     "puppeteer": "^19.5.0"
-  }
+  },
+  "devDependencies": {},
+  "scripts": {
+    "monitor": "./gradingScript.sh -m"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sdipietro/assessment_grading_bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sdipietro/assessment_grading_bot/issues"
+  },
+  "homepage": "https://github.com/sdipietro/assessment_grading_bot#readme"
 }

@@ -17,10 +17,13 @@
 
 8. Add google script credentials
   - ask Steve D for this 
+
 9. Ensure names of students on Google Sheet are most recent ones on Sis
+
 10. To run: 
- - monitor mode: `./gradingScript.sh -m`
+ - monitor mode: `npm run monitor + "(name of assesment *must be exact name from Sis)"`
+  - Ex: `npm run monitor "Ruby 1 Assessment Version A"`
 
  Not yet implemented:
- - grade earlier assessments: `./gradingScript.sh "Ruby 1"`
- - grade specific assessments: `./gradingScript.sh "Ruby 1" "First Last"`
+ - grade without monitor: `npm run grade "Ruby 1"`
+ - grade specific student: `npm run grade "Ruby 1" "First Last"`
