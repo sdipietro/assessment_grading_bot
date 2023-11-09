@@ -11,6 +11,8 @@ const prompt = require("prompt-sync")({ sigint: true });
 // as an instructor. Input as strings
 const progressTrackerEmail = credentials.aAemail;
 const progressTrackerPassword = credentials.aApassword;
+const googleEmail = credentials.googleEmail;
+const googlePassword = credentials.googlePassword;
 
 // 2. Set googleSheetsScoreSheetId to the google sheets id for your cohort's scores sheet 
 // The id is the part between docs.google.com/spreadsheets/d/ and /edit
@@ -28,6 +30,7 @@ const googleSheetsScoreSheetId = credentials.googleSheetsId;
 // const progressTrackerScoresUrl = 'https://progress.appacademy.io/cycles/310/scores';
 // Then, comment out this line:
 const progressTrackerScoresUrl = 'https://progress.appacademy.io/scores';
+const SisSubmissionsUrl = 'https://sis.appacademy.tools/cohorts/2b9f854f-6ded-49dc-8c8c-ba00a3d74bd7/submissions'
 
 async function loginPT(page) {
     console.log('Visiting Progress Tracker...');
@@ -42,48 +45,101 @@ async function loginPT(page) {
     return page;
 }
 
-async function getScores(page, assessment) {
-    await page.waitForSelector('thead', {
+async function loginSis(page) {
+    console.log('Visiting Sis...');
+    await page.goto(SisSubmissionsUrl);
+    console.log('Logging into Sis...');
+    await page.waitForSelector('a[href="/auth/google"]');
+    await page.click('a[href="/auth/google"]');
+    await page.waitForSelector('input[type="email"]');
+    await page.type('input[type="email"]', googleEmail);
+    await page.click('div[jsname="Njthtb"]');
+    await page.waitForNavigation({
+        waitUntil: 'networkidle0',
+    });
+    await page.waitForSelector('input[type="password"]');
+    await page.type('input[type="password"]', googlePassword);
+    await page.click('div[jsname="Njthtb"]');
+    await page.waitForNavigation({
+        waitUntil: 'networkidle0',
+    });
+    await page.goto(SisSubmissionsUrl);
+
+    return page;
+}
+
+async function getScores(page, assessmentName) {
+    await page.waitForSelector('select.w-96.mb-6', {
         visible: true,
     });
-    const studentList = await page.evaluate((assessment) => {
-        let assessmentColumn;
-        let found = false;
-        if (assessment) {
-            let tableHeaders = Array.from(document.getElementsByTagName('thead')[0].getElementsByTagName('th'));
-            for (let i = 0; i < tableHeaders.length; i++) {
-                if (tableHeaders[i].innerText.toLowerCase() === assessment.toLowerCase()) {
-                    found = true;
-                    assessmentColumn = i;
-                }
-            }
-            if (found === false) {
-                throw (`Incorrect Assesment Name ${assessment}`);
-            }
+    const valueToSelect = await page.evaluate((assessmentName) => {
+        const selectElement = document.querySelector('select.w-96.mb-6');
+        const options = Array.from(selectElement.options);
+        const optionToSelect = options.find(option => option.textContent === assessmentName);
+        if (optionToSelect) {
+        
+            selectElement.value = optionToSelect.value;
+            const event = new Event('change', { bubbles: true });
+            selectElement.dispatchEvent(event);
+            return optionToSelect.value;
         } else {
-            assessmentColumn = 2;
+            return null;
         }
-        let assessmentName = document.getElementsByTagName('thead')[0].getElementsByTagName('th')[assessmentColumn].innerText;
+    }, assessmentName);
+
+    if (valueToSelect !== null) {
+        console.log(`Selected assessment: ${assessmentName}`);
+    } else {
+        throw (`Could not find assessment: ${assessmentName}`);
+    }
+
+    await page.waitForSelector('tbody', {
+        visible: true,
+    });
+    await page.waitForSelector('section[data-tooltip="Download Student Submission"]', {
+        visible: true,
+    });
+
+    const studentList = await page.evaluate((assessmentName) => {
+        // let assessmentColumn;
+        // let found = false;
+        // if (assessment) {
+        //     let tableHeaders = Array.from(document.getElementsByTagName('thead')[0].getElementsByTagName('th'));
+        //     for (let i = 0; i < tableHeaders.length; i++) {
+        //         if (tableHeaders[i].innerText.toLowerCase() === assessment.toLowerCase()) {
+        //             found = true;
+        //             assessmentColumn = i;
+        //         }
+        //     }
+        //     if (found === false) {
+        //         throw (`Incorrect Assesment Name ${assessment}`);
+        //     }
+        // } else {
+        //     assessmentColumn = 2;
+        // }
+
+        // let assessmentName = document.getElementsByTagName('thead')[0].getElementsByTagName('th')[assessmentColumn].innerText;
         // let assessmentName = document.getElementsByTagName('thead')[0].getElementsByClassName('a-title open-top open-left')[0].innerText;
         let scoresObj = {[assessmentName]: {}};
-        let studentRows = Array.from(document.getElementsByTagName('tbody')[0].getElementsByTagName('tr'));
+        let studentRows = Array.from(document.getElementsByTagName('tbody')[0].getElementsByTagName('tr')).filter(row => !row.classList.contains('border-b'));
         studentRows.forEach((ele) => {
-            let name = ele.getElementsByTagName('td')[1].getElementsByTagName('a')[0].innerText;
-            let submissionsArr = ele.getElementsByTagName('td')[assessmentColumn + 1].getElementsByTagName('a');
-            let submissionLink = '';
-            if (submissionsArr && submissionsArr.length > 1) {
-                let longestTime = 0;
+            let name = ele.getElementsByTagName('td')[0].getElementsByTagName('a')[0].innerText
+            // let submissionsArr = ele.getElementsByTagName('td')[assessmentColumn + 1].getElementsByTagName('a');
+            // let submissionLink = '';
+            // if (submissionsArr && submissionsArr.length > 1) {
+            //     let longestTime = 0;
                 
-                Array.from(submissionsArr).forEach(a => {
-                    let time = parseInt(a.innerText.split('(')[1].split(' ')[0]);
-                    if (time >= longestTime) {
-                        longestTime = time;
-                        submissionLink = a;
-                    }
-                });
-            } else {
-                submissionLink = ele.getElementsByTagName('td')[assessmentColumn + 1].getElementsByTagName('a')[0];
-            }
+            //     Array.from(submissionsArr).forEach(a => {
+            //         let time = parseInt(a.innerText.split('(')[1].split(' ')[0]);
+            //         if (time >= longestTime) {
+            //             longestTime = time;
+            //             submissionLink = a;
+            //         }
+            //     });
+            // } else {
+            //     submissionLink = ele.getElementsByTagName('td')[assessmentColumn + 1].getElementsByTagName('a')[0];
+            // }
+            let submissionLink = ele.getElementsByTagName('td')[9].getElementsByTagName('a')[0];
             
             if (submissionLink) {
                 scoresObj[assessmentName][name] = submissionLink.href;
@@ -91,7 +147,7 @@ async function getScores(page, assessment) {
         });
       
         return scoresObj;
-    }, assessment);
+    }, assessmentName);
 
     return studentList;
 }
@@ -121,50 +177,58 @@ async function gradeAssessments(assessmentLinksObj, name) {
     }
 
     switch (assessName) {
-        case 'FA1P':
-        case 'FA1':
-        case 'FA2':
-        case 'Ruby 1 Prep':
-        case 'Ruby 1':
-        case 'Ruby 2':
-        case 'Ruby 2R':
+        case 'Foundations 1 Practice Assessment':
+        case 'Foundations 1 Assessment Version A':
+        case 'Foundations 1 Assessment Version B':
+        case 'Foundations 2 Practice Assessment':
+        case 'Foundations 2 Assessment Version A':
+        case 'Foundations 2 Assessment Version B':
+        case 'Ruby 1 Practice Assessment':
+        case 'Ruby 1 Assessment Version A':
+        case 'Ruby 1 Assessment Version B':
+        case 'Ruby 2 Practice Assessment':
+        case 'Ruby 2 Assessment Version A':
+        case 'Ruby 2 Assessment Version B':
             gradingScript = 'rubyGradingScript.sh';
             timeoutLimit = 35000;
             break;
-        case 'Rails 1':
-        case 'Rails 1R':
+        case 'Rails 1 Practice Assessment':
+        case 'Rails 1 Assessment Version A':
+        case 'Rails 1 Assessment Version B':
             gradingScript = 'rails1GradingScript.sh';
             timeoutLimit = 150000;
             break;
-        case 'Rails Olympics':
+        case 'Rails Olympics Practice Assessment':
+        case 'Rails Olympics Assessment Version A':
             gradingScript = 'railsOlympicsGradingScript.sh';
             timeoutLimit = 60000;
             break;
-        case 'Rails 2':
-        case 'Rails 2R':
+        case 'Rails 2 Practice Assessment':
+        case 'Rails 2 Assessment Version A':
+        case 'Rails 2 Assessment Version B':
             gradingScript = 'rails2GradingScript.sh';
-            timeoutLimit = 75000;
+            timeoutLimit = 120000;
             break;
-        case 'JavaScript 1':
-        case 'JavaScript 1R':
+        case 'JavaScript Practice Assessment':
+        case 'JavaScript Assessment Version A':
+        case 'JavaScript Assessment Version B':
             gradingScript = 'javascriptGradingScript.sh';
             timeoutLimit = 30000;
             break;
-        case 'React 1':
-        case 'React 1R':
+        case 'React Practice Assessment':
+        case 'React Assessment Version A':
+        case 'React Assessment Version B':
             gradingScript = 'reactGradingScript.sh';
-            timeoutLimit = 60000;
+            timeoutLimit = 90000;
             break;
         default:
             console.log('Error: Wrong Assessment Name. Cannot find script');
     }
   
     for (let name in links) {
-        let link = links[name].split('?');
-        link.pop();
-        let newLink = link.join('');
+        let link = links[name];
         let newName = name.split(' ').join('');
-        let command = `chmod +x ~/Desktop/assessment_grading_bot/gradingScripts/${gradingScript} && ~/Desktop/assessment_grading_bot/gradingScripts/${gradingScript} "${newLink}" "${newName}"`;
+        let command = `chmod +x ~/Desktop/assessment_grading_bot/gradingScripts/${gradingScript} && ~/Desktop/assessment_grading_bot/gradingScripts/${gradingScript} "${link}" "${newName}"`;
         const result = await new Promise((resolve, reject) => {
             exec(command, { timeout: timeoutLimit }, (error, stdout, stderr) => {
                 if (error) {
@@ -308,22 +372,25 @@ async function inputScoresGoogle(scoresData) {
     let assessName = Object.keys(scoresData)[0];
         
     const assessmentMap = { 
-        'FA1P': 'Fo1p',
-        'FA1': 'Fo1',
-        'FA2': 'Fo2',
-        'Ruby 1 Prep': 'Ru1p',
-        'Ruby 1': 'Ru1',
-        'Ruby 2': 'Ru2',
-        'Ruby 2R': 'Ru2r',
-        'Rails 1': 'Ra1',
-        'Rails 1': 'Ra1r',
-        'Rails Olympics': 'RaO',
-        'Rails 2': 'Ra2',
-        'Rails 2R': 'Ra2r',
-        'JavaScript 1': 'JS1',
-        'JavaScript 1R': 'JS1r',
-        'React 1': 'Re1',
-        'React 1R': 'Re1r'
+        'Foundations 1 Practice Assessment': 'Fo1p',
+        'Foundations 1 Assessment Version A': 'Fo1',
+        'Foundations 1 Assessment Version B': 'Fo1',
+        'Foundations 2 Assessment Version A': 'Fo2',
+        'Foundations 2 Assessment Version B': 'Fo2',
+        'Ruby 1 Practice Assessment': 'Ru1p',
+        'Ruby 1 Assessment Version A': 'Ru1',
+        'Ruby 1 Assessment Version B': 'Ru1',
+        'Ruby 2 Assessment Version A': 'Ru2',
+        'Ruby 2 Assessment Version B': 'Ru2',
+        'Rails 1 Assessment Version A': 'Ra1',
+        'Rails 1 Assessment Version B': 'Ra1',
+        'Rails Olympics Assessment Version A': 'RaO',
+        'Rails 2 Assessment Version A': 'Ra2',
+        'Rails 2 Assessment Version B': 'Ra2',
+        'JavaScript Assessment Version A': 'JS1',
+        'JavaScript Assessment Version B': 'JS1',
+        'React Assessment Version A': 'Re1',
+        'React Assessment Version B': 'Re1',
     }
     let googleSheetsAssessName = assessmentMap[assessName];
 
@@ -431,10 +498,9 @@ async function gradeSingleStudent(assessment, name){
     }
 }
 
-async function beginMonitor(page, prevSubmissions = {}) {
+async function beginMonitor(page, assessmentName, prevSubmissions = {}) {
     console.log(`Checking Submissions...`);
-    await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
-    const newSubmissions = await getScores(page);
+    const newSubmissions = await getScores(page, assessmentName);
     let assessName = Object.keys(newSubmissions)[0];
     const gradeThese = {};
     gradeThese[assessName] = {};
@@ -450,29 +516,31 @@ async function beginMonitor(page, prevSubmissions = {}) {
         const scores = await gradeAssessments(gradeThese);
         console.log(scores);
         console.log('');
-        await inputScoresGoogle(scores);
+        // await inputScoresGoogle(scores);
     } else {
         console.log(`No new submissions for ${assessName}`);
         console.log('');
     }
     
     await new Promise(_ => setTimeout(_, 10000));
-    beginMonitor (page, newSubmissions);
+    beginMonitor (page, assessmentName, newSubmissions);
 }
 
 
-async function monitorMode(){
+async function monitorMode(assessmentName){
     console.log('Opening Virtual Browser...');
-    const browser = await puppeteer.launch({headless: true});
+    const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
-    const loggedInPT = await loginPT(page);
-    await beginMonitor(loggedInPT);
+    const loggedInSis = await loginSis(page);
+    await beginMonitor(loggedInSis, assessmentName);
 }
 
 if (process.argv[2] === '-m') {
-    monitorMode();
-} else if (process.argv[2] && process.argv[3]){
-    gradeSingleStudent(process.argv[2], process.argv[3]);
-} else {
-    gradeAllStudents(process.argv[2]);
+    const assessmentName = process.argv[3];
+    monitorMode(assessmentName);
 }
+// } else if (process.argv[2] && process.argv[3]){
+    // gradeSingleStudent(process.argv[2], process.argv[3]);
+// } else {
+//     gradeAllStudents(process.argv[2]);
+// }

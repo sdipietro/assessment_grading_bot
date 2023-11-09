@@ -1,1 +1,50 @@
 
+Array#merge_sort
+  works with an empty array
+  works with an array of one item
+  sorts numbers
+  sorts arrays with duplicates
+  will use block if given
+  does not modify original
+  calls the merge helper method
+
+Array#pair_sum
+  returns positions of pairs of numbers that add to zero
+  returns positions of pairs that add to other targets
+  finds multiple pairs
+  finds pairs with same element
+  returns [] when no pair is found
+  won't find spurious target pairs
+
+Array#my_flatten
+  does not modify the original array
+  when called with no level specified
+    recursively flattens all nested arrays
+  when called with level = 0
+    does not flatten the array
+  when called with level = 1
+    flattens arrays nested one level deep
+
+String#symmetric_substrings
+  handles a simple example
+  handles two substrings
+  handles nested substrings
+
+#nth_prime
+  returns the first prime number
+  returns the fifth prime number
+  returns nil when asked for the zeroth prime
+
+Array#my_each
+  calls the block passed to it
+  yields each element to the block
+  is chainable and returns the original array
+
+Array#my_select
+  calls the block passed to it
+  yields each element to the block
+  returns an array of filtered down items
+
+Finished in 0.04125 seconds (files took 0.13178 seconds to load)
+29 examples, 0 failures
+
